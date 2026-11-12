@@ -1,0 +1,183 @@
+﻿<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meri Dukan</title>
+<style>
+*{box-sizing:border-box;font-family:Arial} body{margin:0;background:#f2f2f2}
+header{background:#111;color:#fff;padding:15px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0}
+header button{background:#ff9800;border:0;padding:8px 14px;border-radius:8px;font-weight:bold;cursor:pointer}
+.container{padding:12px;max-width:1000px;margin:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px #0001}
+.card img{width:100%;height:150px;object-fit:cover}
+.card .p{padding:10px} .price{color:green;font-weight:bold;font-size:18px}
+.card button{width:100%;background:#111;color:#fff;border:0;padding:9px;border-radius:8px;margin-top:6px;cursor:pointer}
+input,select,textarea{width:100%;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:8px}
+.btn{background:#25D366;color:#fff;border:0;padding:12px;border-radius:10px;width:100%;font-size:16px;font-weight:bold;cursor:pointer}
+.hidden{display:none}
+.cart-item{background:#fff;padding:10px;border-radius:10px;display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.cart-item img{width:60px;height:60px;object-fit:cover;border-radius:8px}
+.pay-box{background:#fff;padding:15px;border-radius:12px;text-align:center}
+</style>
+</head>
+<body>
+
+<header>
+  <b>🛍️ Meri Dukan</b>
+  <div>
+    <button onclick="showPage('shop')">Shop</button>
+    <button onclick="showPage('cart')">Cart (<span id="cartCount">0</span>)</button>
+    
+  </div>
+</header>
+
+<div class="container">
+<!-- SHOP PAGE -->
+<div id="shopPage">
+  <h2>Products</h2>
+  <div id="productList" class="grid"></div>
+  <p id="noProduct" style="text-align:center;color:#888">Abhi koi product nahi hai. Admin se add karo.</p>
+</div>
+
+<!-- CART PAGE -->
+<div id="cartPage" class="hidden">
+  <h2>🛒 Tumhara Cart</h2>
+  <div id="cartList"></div>
+  <h3 id="totalText">Total: ₹0</h3>
+  <button class="btn" onclick="showPage('checkout')">Checkout → Payment Page</button>
+  <br><br><button onclick="clearCart()">Cart Khali Karo</button>
+</div>
+
+<!-- CHECKOUT / PAYMENT PAGE -->
+<div id="checkoutPage" class="hidden">
+  <h2>💳 Payment Page</h2>
+  <div class="pay-box">
+    <h3 id="payTotal">Total: ₹0</h3>
+    <input id="custName" placeholder="Tumhara Naam">
+    <input id="custPhone" placeholder="Mobile Number">
+    <textarea id="custAddr" placeholder="Delivery Address"></textarea>
+    <select id="payMethod">
+      <option value="UPI">UPI - Google Pay / PhonePe / Paytm</option>
+      <option value="COD">Cash on Delivery</option>
+      <option value="Card">Card Payment</option>
+    </select>
+    <div id="upiBox" style="margin:12px 0;background:#e8f5e9;padding:12px;border-radius:10px">
+      <b>UPI ID: tumhari-dukan@okupi</b><br>
+      <small>Is UPI par payment karo aur neeche Order Confirm dabao</small><br><br>
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=tumhari-dukan@okupi" alt="QR">
+    </div>
+    <button class="btn" onclick="placeOrder()">Order Confirm Karo</button>
+    <p id="orderMsg" style="color:green;font-weight:bold"></p>
+  </div>
+</div>
+
+<!-- ADMIN PAGE - Owner ke liye, bina coding ke -->
+<div id="adminPage" class="hidden">
+  <h2>👨‍💼 Shop Owner - Product Add Karo</h2>
+  <div style="background:#fff;padding:15px;border-radius:12px">
+    <input id="pName" placeholder="Product ka Naam - jaise Saree, T-Shirt">
+    <input id="pPrice" type="number" placeholder="Price - jaise 499">
+    <input id="pImg" placeholder="Photo ka Link - Google se copy karke paste karo">
+    <small>Photo nahi hai to khaali chhodo, auto photo aa jayega</small>
+    <input id="pDesc" placeholder="Chhota Description - jaise Cotton, Size L">
+    <button class="btn" onclick="addProduct()">+ Product Add Karo</button>
+    <p style="color:#888;font-size:13px">Note: Ye product isi phone/browser me save hoga. Dusre phone me dikhane ke liye isi file ko usme kholna hoga.</p>
+  </div>
+  <h3>Added Products - Delete bhi kar sakte ho</h3>
+  <div id="adminList"></div>
+</div>
+</div>
+
+<script>
+// ---- DATA SAVE - Bina Database ke, Browser me ----
+let products = JSON.parse(localStorage.getItem('myShopProducts') || '[]');
+let cart = JSON.parse(localStorage.getItem('myShopCart') || '[]');
+
+// Default 3 demo products agar pehli baar khol rahe ho
+if(products.length===0){
+  products = [
+    {name:"Maroon Saree", price:999, img:"https://images.unsplash.com/photo-1610030469983-98e550d61940?w=400", desc:"Party Wear, With Blouse"},
+    {name:"Kurti Set", price:599, img:"https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=400", desc:"Cotton, Size M"},
+    {name:"Handbag", price:399, img:"https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400", desc:"Premium Leather Look"}
+  ];
+  saveProducts();
+}
+function saveProducts(){ localStorage.setItem('myShopProducts', JSON.stringify(products)); }
+function saveCart(){ localStorage.setItem('myShopCart', JSON.stringify(cart)); }
+
+function showPage(p){
+  ['shopPage','cartPage','checkoutPage','adminPage'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  if(p==='shop') document.getElementById('shopPage').classList.remove('hidden');
+  if(p==='cart') document.getElementById('cartPage').classList.remove('hidden');
+  if(p==='checkout') document.getElementById('checkoutPage').classList.remove('hidden');
+  if(p==='admin') document.getElementById('adminPage').classList.remove('hidden');
+  renderAll();
+}
+
+function renderAll(){
+  // SHOP
+  let html='';
+  products.forEach((pr,i)=>{
+    html+=`<div class="card"><img src="${pr.img}"><div class="p"><b>${pr.name}</b><br><small>${pr.desc}</small><div class="price">₹${pr.price}</div><button onclick="addToCart(${i})">Add to Cart</button></div></div>`;
+  });
+  document.getElementById('productList').innerHTML=html;
+  document.getElementById('noProduct').style.display = products.length?'none':'block';
+
+  // ADMIN LIST
+  let aHtml='';
+  products.forEach((pr,i)=>{
+    aHtml+=`<div class="cart-item"><img src="${pr.img}"><div style="flex:1"><b>${pr.name}</b><br>₹${pr.price}</div><button onclick="deleteProduct(${i})">Delete</button></div>`;
+  });
+  document.getElementById('adminList').innerHTML=aHtml;
+
+  // CART
+  let cHtml=''; let total=0;
+  cart.forEach((it,i)=>{
+    total+=it.price*it.qty;
+    cHtml+=`<div class="cart-item"><img src="${it.img}"><div style="flex:1"><b>${it.name}</b><br>₹${it.price} x ${it.qty}</div><button onclick="removeFromCart(${i})">X</button></div>`;
+  });
+  document.getElementById('cartList').innerHTML = cHtml || '<p>Cart khaali hai</p>';
+  document.getElementById('totalText').innerText='Total: ₹'+total;
+  document.getElementById('payTotal').innerText='Total: ₹'+total;
+  document.getElementById('cartCount').innerText=cart.reduce((s,x)=>s+x.qty,0);
+}
+
+function addProduct(){
+  let name=document.getElementById('pName').value.trim();
+  let price=parseInt(document.getElementById('pPrice').value);
+  let img=document.getElementById('pImg').value.trim() || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400';
+  let desc=document.getElementById('pDesc').value.trim() || 'Best Quality';
+  if(!name || !price){ alert('Naam aur Price to bharo'); return; }
+  products.push({name,price,img,desc}); saveProducts();
+  document.getElementById('pName').value=''; document.getElementById('pPrice').value=''; document.getElementById('pImg').value=''; document.getElementById('pDesc').value='';
+  alert('Product Add Ho Gaya!'); renderAll();
+}
+function deleteProduct(i){ if(confirm('Delete karein?')){ products.splice(i,1); saveProducts(); renderAll(); } }
+function addToCart(i){
+  let pr=products[i];
+  let found=cart.find(x=>x.name===pr.name);
+  if(found) found.qty++; else cart.push({...pr,qty:1});
+  saveCart(); renderAll(); alert(pr.name+' Cart me add ho gaya');
+}
+function removeFromCart(i){ cart.splice(i,1); saveCart(); renderAll(); }
+function clearCart(){ cart=[]; saveCart(); renderAll(); }
+function placeOrder(){
+  let name=document.getElementById('custName').value;
+  let phone=document.getElementById('custPhone').value;
+  let method=document.getElementById('payMethod').value;
+  if(!name || !phone){ alert('Naam aur Phone bharo'); return; }
+  if(cart.length===0){ alert('Cart khaali hai'); return; }
+  // WhatsApp par order bhejna - yahan apna number daalo
+  let msg = `Naya Order!%0AName: ${name}%0APhone: ${phone}%0APayment: ${method}%0AItems: ` + cart.map(x=>x.name+' x'+x.qty).join(', ');
+  document.getElementById('orderMsg').innerText='✅ Order Confirm! Owner ko WhatsApp par bhej rahe hain...';
+  setTimeout(()=>{ window.open('https://wa.me/919999999999?text='+msg,'_blank'); cart=[]; saveCart(); renderAll(); }, 1000);
+}
+document.getElementById('payMethod').addEventListener('change', function(){
+  document.getElementById('upiBox').style.display = this.value==='UPI' ? 'block':'none';
+});
+renderAll();
+</script>
+</body>
+</html>
