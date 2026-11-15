@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - Meri Dukan</title>
+<style>
+*{box-sizing:border-box;font-family:Arial} body{margin:0;background:#111;color:#fff;padding:15px}
+input{width:100%;padding:12px;margin:7px 0;border-radius:10px;border:0}
+button{width:100%;padding:12px;border:0;border-radius:10px;font-weight:bold;cursor:pointer}
+.card{background:#222;padding:12px;border-radius:12px;display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.card img{width:60px;height:60px;object-fit:cover;border-radius:8px}
+</style>
+</head>
+<body>
+<h2>?? Owner Admin Panel</h2>
+
+<!-- PASSWORD LOCK -->
+<div id="lockBox">
+  <p>Admin Password daalo:</p>
+  <input type="password" id="pass" placeholder="Password">
+  <button style="background:#ff9800" onclick="unlock()">Unlock</button>
+  <p style="color:#aaa;font-size:13px">Default Password: <b>1234</b> - neeche code me badal sakte ho</p>
+</div>
+
+<!-- ADMIN FORM - Password ke baad khulega -->
+<div id="adminBox" style="display:none">
+  <input id="pName" placeholder="Product ka Naam">
+  <input id="pPrice" type="number" placeholder="Price - 499">
+  <input id="pImg" placeholder="Photo ka Link">
+  <input id="pDesc" placeholder="Description">
+  <button style="background:#25D366;color:#fff" onclick="addProduct()">+ Product Add Karo</button>
+  <br><br>
+  <a href="shop.html" style="color:#ff9800">? Shop Dekho</a>
+  <h3>Added Products</h3>
+  <div id="list"></div>
+</div>
+
+<script>
+let products = JSON.parse(localStorage.getItem('myShopProducts') || '[]');
+function unlock(){
+  // Yahan apna password badlo
+  if(document.getElementById('pass').value === '1234'){
+    document.getElementById('lockBox').style.display='none';
+    document.getElementById('adminBox').style.display='block';
+    render();
+  } else { alert('Galat Password!'); }
+}
+function save(){ localStorage.setItem('myShopProducts', JSON.stringify(products)); }
+function addProduct(){
+  let name=document.getElementById('pName').value.trim();
+  let price=parseInt(document.getElementById('pPrice').value);
+  let img=document.getElementById('pImg').value.trim() || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400';
+  let desc=document.getElementById('pDesc').value.trim() || 'Best Quality';
+  if(!name || !price){ alert('Naam aur Price bharo'); return; }
+  products.push({name,price,img,desc}); save();
+  document.getElementById('pName').value=''; document.getElementById('pPrice').value=''; document.getElementById('pImg').value=''; document.getElementById('pDesc').value='';
+  alert('Add Ho Gaya!'); render();
+}
+function del(i){ if(confirm('Delete karein?')){ products.splice(i,1); save(); render(); } }
+function render(){
+  let h='';
+  products.forEach((p,i)=>{
+    h+=`<div class="card"><img src="${p.img}"><div style="flex:1"><b>${p.name}</b><br>?${p.price}</div><button style="width:auto;background:red;color:#fff" onclick="del(${i})">Delete</button></div>`;
+  });
+  document.getElementById('list').innerHTML = h || 'Koi product nahi';
+}
+</script>
+</body>
+</html>
