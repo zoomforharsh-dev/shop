@@ -172,7 +172,7 @@ function placeOrder(){
   // WhatsApp par order bhejna - yahan apna number daalo
   let msg = `Naya Order!%0AName: ${name}%0APhone: ${phone}%0APayment: ${method}%0AItems: ` + cart.map(x=>x.name+' x'+x.qty).join(', ');
   document.getElementById('orderMsg').innerText='✅ Order Confirm! Owner ko WhatsApp par bhej rahe hain...';
-  setTimeout(()=>{ window.open('https://wa.me/919993366275?text='+msg,'_blank'); cart=[]; saveCart(); renderAll(); }, 1000);
+  setTimeout(()=>{ window.open('https://wa.me/919174496489?text='+msg,'_blank'); cart=[]; saveCart(); renderAll(); }, 1000);
 }
 document.getElementById('payMethod').addEventListener('change', function(){
   document.getElementById('upiBox').style.display = this.value==='UPI' ? 'block':'none';
